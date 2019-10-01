@@ -344,7 +344,7 @@ function declarative.load_into_cache(entities, hash, shadow_page)
       table.insert(ids, id)
 
       local cache_key = dao:cache_key(id)
-      item = remove_nulls(item)
+      item = schema:transform(remove_nulls(item))
       local ok, err = kong.cache:safe_set(cache_key, item, shadow_page)
       if not ok then
         return nil, err

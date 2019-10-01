@@ -442,7 +442,7 @@ end
 -- such as "x.y.z", such that `get_field(t, "x.y.z")` is the
 -- same as `t.x.y.z`.
 local function get_field(tbl, name)
-  if tbl == nil then
+  if tbl == nil or tbl == null then
     return nil
   end
   local dot = find(name, ".", 1, true)
@@ -489,11 +489,12 @@ local function get_schema_field(schema, name)
 end
 
 
-local function mutually_required(entity, field_names)
+local function mutually_required(entity, field_names, accept_null)
   local nonempty = {}
 
   for _, name in ipairs(field_names) do
-    if is_nonempty(get_field(entity, name)) then
+    local f = get_field(entity, name)
+    if (accept_null and f ~= nil) or is_nonempty(f) then
       insert(nonempty, name)
     end
   end
@@ -1340,12 +1341,12 @@ local function run_transformation_checks(self, input, original_input, rbw_entity
     end
 
     if needs_changed or (not none_set) then
-      local ok, err = mutually_required(needs_changed and original_input or input, args)
+      local ok, err = mutually_required(needs_changed and original_input or input, args, true)
       if not ok then
         insert_entity_error(errors, validation_errors.MUTUALLY_REQUIRED:format(err))
 
       else
-        ok, err = mutually_required(original_input or input, transformation.input)
+        ok, err = mutually_required(original_input or input, transformation.input, true)
         if not ok then
           insert_entity_error(errors, validation_errors.MUTUALLY_REQUIRED:format(err))
         end
